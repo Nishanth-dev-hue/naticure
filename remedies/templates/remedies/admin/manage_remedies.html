@@ -1,0 +1,204 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12">
+    <div class="flex justify-between items-center mb-12">
+        <div>
+            <h2 class="text-4xl font-bold text-emerald-950 mb-2">Manage Remedies</h2>
+            <p class="text-slate-500">Add, edit, or remove traditional remedies from the database.</p>
+        </div>
+        <button onclick="showAddForm()" class="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg hover:bg-emerald-700 transition-all flex items-center">
+            <i class="fas fa-plus mr-2"></i> Add New Remedy
+        </button>
+    </div>
+
+    <!-- Add/Edit Form (Modal style) -->
+    <div id="remedy-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto bg-slate-900/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-4xl mx-auto my-8 overflow-hidden">
+            <div class="bg-emerald-600 p-8 text-white flex justify-between items-center">
+                <h3 id="modal-title" class="text-2xl font-bold">Add Remedy</h3>
+                <button onclick="hideAddForm()" class="text-emerald-100 hover:text-white transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="remedy-form" class="p-8 space-y-8">
+                <input type="hidden" id="remedy-id">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Symptom (EN)</label>
+                        <input type="text" id="symptom_english" name="symptom_english" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Symptom (TE)</label>
+                        <input type="text" id="symptom_telugu" name="symptom_telugu" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Symptom (HI)</label>
+                        <input type="text" id="symptom_hindi" name="symptom_hindi" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Remedy Name</label>
+                    <input type="text" id="remedy_name" name="remedy_name" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Ingredients</label>
+                        <textarea id="ingredients" name="ingredients" required rows="4" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none"></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Preparation Steps</label>
+                        <textarea id="preparation_steps" name="preparation_steps" required rows="4" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Relief Time</label>
+                        <input type="text" id="relief_time" name="relief_time" required placeholder="e.g. 30 mins" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Remedy Type</label>
+                        <input type="text" id="remedy_type" name="remedy_type" required placeholder="e.g. Ayurvedic" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3 bg-emerald-50 p-4 rounded-xl">
+                    <input type="checkbox" id="verified" name="verified" class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500">
+                    <label for="verified" class="font-bold text-emerald-800">Mark as Verified Remedy</label>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-bold text-lg hover:bg-emerald-700 transition-all shadow-lg hover:shadow-emerald-200">
+                        Save Changes
+                    </button>
+                    <button type="button" onclick="hideAddForm()" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="bg-white rounded-[2.5rem] shadow-xl shadow-emerald-100/30 border border-emerald-50 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-emerald-50 border-b border-emerald-100">
+                    <tr>
+                        <th class="px-8 py-6 text-xs font-bold text-emerald-800 uppercase tracking-widest">Remedy</th>
+                        <th class="px-8 py-6 text-xs font-bold text-emerald-800 uppercase tracking-widest">Symptoms</th>
+                        <th class="px-8 py-6 text-xs font-bold text-emerald-800 uppercase tracking-widest text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="remedies-table" class="divide-y divide-emerald-50">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadRemedies() {
+        const table = document.getElementById('remedies-table');
+        try {
+            const response = await fetch('/api/admin/remedies/');
+            const data = await response.json();
+            
+            table.innerHTML = data.remedies.map(r => `
+                <tr class="hover:bg-emerald-50/30 transition-colors group">
+                    <td class="px-8 py-6">
+                        <div class="font-bold text-emerald-950 mb-1">${r.remedy_name}</div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">${r.remedy_type}</div>
+                    </td>
+                    <td class="px-8 py-6">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-1 bg-white border border-slate-200 text-xs rounded-md text-slate-600">EN: ${r.symptom_english}</span>
+                            ${r.symptom_telugu ? `<span class="px-2 py-1 bg-white border border-slate-200 text-xs rounded-md text-slate-600">TE: ${r.symptom_telugu}</span>` : ''}
+                        </div>
+                    </td>
+                    <td class="px-8 py-6">
+                        <div class="flex justify-center space-x-3">
+                            <button onclick="editRemedy(${JSON.stringify(r).replace(/"/g, '&quot;')})" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all">
+                                <i class="fas fa-edit text-sm"></i>
+                            </button>
+                            <button onclick="deleteRemedy(${r.id})" class="w-10 h-10 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {}
+    }
+
+    function showAddForm() {
+        document.getElementById('modal-title').textContent = 'Add Remedy';
+        document.getElementById('remedy-id').value = '';
+        document.getElementById('remedy-form').reset();
+        document.getElementById('remedy-modal').classList.remove('hidden');
+    }
+
+    function hideAddForm() {
+        document.getElementById('remedy-modal').classList.add('hidden');
+    }
+
+    function editRemedy(r) {
+        document.getElementById('modal-title').textContent = 'Edit Remedy';
+        document.getElementById('remedy-id').value = r.id;
+        document.getElementById('symptom_english').value = r.symptom_english;
+        document.getElementById('symptom_telugu').value = r.symptom_telugu;
+        document.getElementById('symptom_hindi').value = r.symptom_hindi;
+        document.getElementById('remedy_name').value = r.remedy_name;
+        document.getElementById('ingredients').value = r.ingredients;
+        document.getElementById('preparation_steps').value = r.preparation_steps;
+        document.getElementById('relief_time').value = r.relief_time;
+        document.getElementById('remedy_type').value = r.remedy_type;
+        document.getElementById('verified').checked = r.verified;
+        document.getElementById('remedy-modal').classList.remove('hidden');
+    }
+
+    async function deleteRemedy(id) {
+        if (!confirm('Are you sure you want to delete this remedy?')) return;
+        try {
+            const response = await fetch(`/api/admin/remedies/delete/${id}/`, { method: 'DELETE' });
+            if (response.ok) {
+                alert('Remedy deleted!');
+                loadRemedies();
+            }
+        } catch (error) {}
+    }
+
+    document.getElementById('remedy-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('remedy-id').value;
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        data.verified = document.getElementById('verified').checked;
+
+        const url = id ? `/api/admin/remedies/update/${id}/` : '/api/admin/remedies/create/';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                alert('Remedy saved successfully!');
+                hideAddForm();
+                loadRemedies();
+            }
+        } catch (error) {}
+    });
+
+    loadRemedies();
+</script>
+{% endblock %}

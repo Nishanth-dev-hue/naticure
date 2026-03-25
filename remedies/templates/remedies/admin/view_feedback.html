@@ -1,0 +1,88 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12">
+    <div class="mb-12">
+        <h2 class="text-4xl font-bold text-emerald-950 mb-2">User Feedback</h2>
+        <p class="text-slate-500 text-lg">Listen to what your users are saying about the remedies.</p>
+    </div>
+
+    <div id="feedback-list" class="space-y-6">
+        <!-- Loading state -->
+        <div class="animate-pulse bg-white p-8 rounded-3xl border border-emerald-50 h-32"></div>
+        <div class="animate-pulse bg-white p-8 rounded-3xl border border-emerald-50 h-32"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-emerald-100 shadow-sm">
+        <div class="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+            <i class="fas fa-comment-slash"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-emerald-950 mb-4">No Feedback Yet</h3>
+        <p class="text-slate-600">Feedback from users will appear here once they start rating remedies.</p>
+    </div>
+</div>
+
+<style>
+    .feedback-card {
+        background: white;
+        border-radius: 1.5rem;
+        border: 1px solid #f0fdf4;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        transition: transform 0.2s;
+    }
+    .feedback-card:hover {
+        transform: scale(1.01);
+    }
+    .star-rating {
+        color: #fbbf24;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadFeedback() {
+        const container = document.getElementById('feedback-list');
+        const emptyState = document.getElementById('empty-state');
+        try {
+            const response = await fetch('/api/admin/feedback/');
+            const data = await response.json();
+            
+            if (data.feedback.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            container.innerHTML = data.feedback.map(f => `
+                <div class="feedback-card p-8 flex flex-col md:flex-row md:items-center gap-6">
+                    <div class="flex-shrink-0 w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl text-emerald-600 font-bold">
+                        ${f.rating}
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold text-emerald-950">${f.remedy_name}</h3>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">${f.created_at}</span>
+                        </div>
+                        <div class="star-rating mb-3">
+                            ${'★'.repeat(f.rating)}${'☆'.repeat(5-f.rating)}
+                        </div>
+                        <p class="text-slate-600 italic">"${f.feedback_text}"</p>
+                    </div>
+
+                    <div class="flex-shrink-0">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full uppercase tracking-tighter">${f.language}</span>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500">Error loading feedback.</p>';
+        }
+    }
+    loadFeedback();
+</script>
+{% endblock %}

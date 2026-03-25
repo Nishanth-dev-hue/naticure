@@ -1,0 +1,133 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12">
+    <div class="mb-12">
+        <h2 class="text-4xl font-bold text-emerald-950 mb-2">Review Suggestions</h2>
+        <p class="text-slate-500 text-lg">Community-submitted remedies waiting for your expert approval.</p>
+    </div>
+
+    <div id="suggestions-list" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Loading state -->
+        <div class="animate-pulse bg-white p-8 rounded-3xl border border-emerald-50 h-64"></div>
+        <div class="animate-pulse bg-white p-8 rounded-3xl border border-emerald-50 h-64"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-emerald-100 shadow-sm">
+        <div class="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+            <i class="fas fa-check-double"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-emerald-950 mb-4">All Caught Up!</h3>
+        <p class="text-slate-600 max-w-md mx-auto">There are no pending suggestions to review at the moment.</p>
+    </div>
+</div>
+
+<style>
+    .suggestion-card {
+        background: white;
+        border-radius: 2rem;
+        border: 1px solid #f0fdf4;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .suggestion-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    .label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #059669;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadSuggestions() {
+        const container = document.getElementById('suggestions-list');
+        const emptyState = document.getElementById('empty-state');
+        try {
+            const response = await fetch('/api/admin/suggestions/');
+            const data = await response.json();
+            
+            if (data.suggestions.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            container.innerHTML = data.suggestions.map(s => `
+                <div class="suggestion-card flex flex-col h-full overflow-hidden">
+                    <div class="p-8 flex-1">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="label">Symptom</span>
+                                <h3 class="text-xl font-bold text-emerald-950">${s.symptom}</h3>
+                            </div>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase">${s.language}</span>
+                        </div>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div>
+                                <span class="label">Remedy Name</span>
+                                <p class="text-slate-700 font-medium">${s.remedy_name}</p>
+                            </div>
+                            <div>
+                                <span class="label">Ingredients</span>
+                                <p class="text-slate-600 text-sm line-clamp-2">${s.ingredients}</p>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-400 italic">
+                            Submitted on ${s.created_at}
+                        </div>
+                    </div>
+
+                    <div class="px-8 py-6 bg-emerald-50/50 flex gap-4">
+                        <button onclick="approve(${s.id})" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-md">
+                            Approve
+                        </button>
+                        <button onclick="reject(${s.id})" class="flex-1 py-3 bg-white text-red-600 border border-red-100 rounded-xl font-bold hover:bg-red-50 transition-all">
+                            Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500 p-8">Error loading suggestions.</p>';
+        }
+    }
+
+    async function approve(id) {
+        if (!confirm("Approve this remedy? It will be moved to the main collection.")) return;
+        try {
+            const response = await fetch(`/api/admin/approve/${id}/`, { method: 'POST' });
+            if (response.ok) {
+                alert("Remedy approved and added to database!");
+                loadSuggestions();
+            }
+        } catch (error) {}
+    }
+
+    async function reject(id) {
+        if (!confirm("Are you sure you want to reject this suggestion?")) return;
+        try {
+            const response = await fetch(`/api/admin/reject/${id}/`, { method: 'POST' });
+            if (response.ok) {
+                alert("Suggestion rejected.");
+                loadSuggestions();
+            }
+        } catch (error) {}
+    }
+
+    loadSuggestions();
+</script>
+{% endblock %}

@@ -1,0 +1,308 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-12">
+    <div class="mb-12 flex items-center justify-between">
+        <div>
+            <h2 class="text-3xl font-bold text-emerald-950 mb-2" data-key="results_title">Remedy Results</h2>
+            <p class="text-slate-500" id="search-info" data-key="search_loading">Preparing your natural remedies...</p>
+        </div>
+        <a href="{% url 'home' %}" class="text-emerald-600 font-semibold hover:text-emerald-700 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> <span data-key="new_search">New Search</span>
+        </a>
+    </div>
+
+    <div class="mt-2 mb-10">
+        <div class="flex items-center bg-white rounded-full shadow-md px-4 py-2 max-w-xl mx-auto">
+            <input 
+                id="search-input"
+                type="text" 
+                placeholder="Describe your problem (e.g. cough, fever, headache)" data-key-placeholder="search_placeholder"
+                class="flex-1 outline-none px-3 py-2 text-gray-600"
+            >
+            <button 
+                onclick="goSearch()" 
+                class="bg-emerald-600 text-white px-5 py-2 rounded-full hover:bg-emerald-700 transition"
+            >
+                <span data-key="find_remedy">Find Remedy</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="results-container" class="space-y-8">
+        <!-- Loading state -->
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mb-4"></div>
+            <p class="text-slate-500 font-medium"><span data-key="loading_text">Finding best natural remedies for you...</span></p>
+        </div>
+    </div>
+
+    <!-- No Result UI -->
+    <div id="no-result" class="hidden text-center py-20 bg-white rounded-3xl border-2 border-dashed border-emerald-100 shadow-sm">
+        <div class="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+            <i class="fas fa-search"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-emerald-950 mb-4"><span data-key="no_result_title">We couldn’t find an exact match</span></h3>
+        <p class="text-slate-600 mb-8 max-w-md mx-auto"><span data-key="no_result_desc">Try searching with a similar symptom or explore common remedies below.</span></p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mb-6">
+            <a href="{% url 'home' %}" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition">
+                <span data-key="try_again">Try Another Search</span>
+            </a>
+            <a href="{% url 'search_remedy' %}" class="px-6 py-3 border border-emerald-600 text-emerald-600 rounded-xl font-semibold hover:bg-emerald-50 transition">
+                <span data-key="browse">Browse Remedies</span>
+            </a>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3 mt-4">
+            <button onclick="window.location.href='{% url 'search_remedy' %}?symptom=cough&lang=' + (localStorage.getItem('lang') || 'english')" class="chip-btn">Cough</button>
+            <button onclick="window.location.href='{% url 'search_remedy' %}?symptom=fever&lang=' + (localStorage.getItem('lang') || 'english')" class="chip-btn">Fever</button>
+            <button onclick="window.location.href='{% url 'search_remedy' %}?symptom=cold&lang=' + (localStorage.getItem('lang') || 'english')" class="chip-btn">Cold</button>
+            <button onclick="window.location.href='{% url 'search_remedy' %}?symptom=headache&lang=' + (localStorage.getItem('lang') || 'english')" class="chip-btn">Headache</button>
+            <button onclick="window.location.href='{% url 'search_remedy' %}?symptom=acidity&lang=' + (localStorage.getItem('lang') || 'english')" class="chip-btn">Acidity</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .remedy-card {
+        background: white;
+        border-radius: 1.5rem;
+        border: 1px solid #f0fdf4;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .remedy-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #059669;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .star-btn {
+        font-size: 1.5rem;
+        color: #e2e8f0;
+        transition: color 0.2s, transform 0.2s;
+    }
+    .star-btn:hover {
+        transform: scale(1.2);
+    }
+    .star-btn.active {
+        color: #fbbf24;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const symptom = urlParams.get('symptom') || '';
+    if (!symptom || symptom.trim() === "") {
+        document.getElementById('search-info').textContent = "Browsing all remedies";
+    }
+
+    function detectLang(text) {
+        const telugu = /[\u0C00-\u0C7F]/;
+        const hindi = /[\u0900-\u097F]/;
+
+        if (telugu.test(text)) return 'telugu';
+        if (hindi.test(text)) return 'hindi';
+        return localStorage.getItem('lang') || 'english';
+    }
+
+    const lang = detectLang(symptom || '');
+
+    if (symptom && symptom.trim() !== "") {
+        document.getElementById('search-info').textContent = `Showing remedies for "${symptom}"`;
+    } else {
+        document.getElementById('search-info').textContent = "Browsing all remedies by symptoms";
+    }
+
+    const uiTranslations = {
+        english: {
+            helpful: "Was this helpful?",
+            share_exp: "Share your experience...",
+            submit: "Submit"
+        },
+        hindi: {
+            helpful: "क्या यह मददगार था?",
+            share_exp: "अपना अनुभव साझा करें...",
+            submit: "जमा करें"
+        },
+        telugu: {
+            helpful: "ఇది సహాయకరమా?",
+            share_exp: "మీ అనుభవాన్ని పంచుకోండి...",
+            submit: "సమర్పించండి"
+        }
+    };
+
+    async function loadRemedies() {
+        const container = document.getElementById('results-container');
+        container.classList.remove('hidden');
+        document.getElementById('no-result').classList.add('hidden');
+        container.innerHTML = document.getElementById('loader').outerHTML;
+        // Fail-safe timeout to prevent infinite loader
+        setTimeout(() => {
+            if (container.querySelector('#loader')) {
+                container.innerHTML = `
+                    <div class="text-center py-20 text-slate-500">
+                        Taking longer than expected... Please try again.
+                    </div>
+                `;
+            }
+        }, 8000);
+        try {
+            const response = await fetch(`/api/remedies/?symptom=${encodeURIComponent(symptom || '')}&lang=${lang}`);
+            const data = await response.json();
+            console.log("API RESPONSE:", data);
+
+            if (!data.remedies || data.remedies.length === 0) {
+                container.classList.add('hidden');
+                document.getElementById('no-result').classList.remove('hidden');
+                return;
+            }
+
+            container.innerHTML = data.remedies.map(r => `
+                <div class="remedy-card group" data-id="${r.id}">
+                    <div class="p-8 border-b border-emerald-50">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="mb-3">
+                                <p class="text-sm font-semibold text-emerald-600 mb-1">
+                                    ${lang === 'telugu' ? 'లక్షణం' : lang === 'hindi' ? 'लक्षण' : 'Symptom'}: ${r.symptom_name || 'General'}
+                                </p>
+                                <h3 class="text-2xl font-bold text-emerald-950">${r.remedy_name}</h3>
+                            </div>
+                            ${r.verified ? `<span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center"><i class="fas fa-check-circle mr-1"></i> ${lang === 'telugu' ? 'ధృవీకరించబడింది' : lang === 'hindi' ? 'सत्यापित' : 'VERIFIED'}</span>` : ''}
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <span class="section-label"><i class="fas fa-leaf mr-1"></i> ${lang === 'telugu' ? 'పదార్థాలు' : lang === 'hindi' ? 'सामग्री' : 'Ingredients'}</span>
+                                <p class="text-slate-700 leading-relaxed">${(r.ingredients || '').replace(/\n/g, '<br>')}</p>
+                            </div>
+                            <div>
+                                <span class="section-label"><i class="fas fa-mortar-pestle mr-1"></i> ${lang === 'telugu' ? 'తయారీ విధానం' : lang === 'hindi' ? 'तैयारी' : 'Preparation'}</span>
+                                <p class="text-slate-700 leading-relaxed">${(r.preparation_steps || '').replace(/\n/g, '<br>')}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-8 py-4 bg-emerald-50/50 flex flex-wrap gap-6 text-sm font-medium text-emerald-800">
+                        <span><i class="fas fa-clock mr-2 opacity-50"></i>${lang === 'telugu' ? 'ఉపశమనం' : lang === 'hindi' ? 'राहत' : 'Relief in'} ${r.relief_time}</span>
+                        <span><i class="fas fa-tag mr-2 opacity-50"></i>${r.remedy_type}</span>
+                    </div>
+
+                    <div class="p-8 bg-slate-50">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div class="space-y-4">
+                                <p class="text-sm font-bold text-slate-500 uppercase tracking-wider">${uiTranslations[lang]?.helpful || "Was this helpful?"}</p>
+                                <div class="flex items-center space-x-2" id="stars-${r.id}">
+                                    ${[1,2,3,4,5].map(num => `
+                                        <button onclick="setRating(${r.id}, ${num})" class="star-btn" data-val="${num}">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 max-w-md">
+                                <div class="relative">
+                                    <textarea id="comment-${r.id}" placeholder="${uiTranslations[lang]?.share_exp || "Share your experience..."}" 
+                                              class="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all h-20 resize-none"></textarea>
+                                    <button onclick="submitFeedback(${r.id})" 
+                                            class="absolute right-2 bottom-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm">
+                                        ${uiTranslations[lang]?.submit || "Submit"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+        } catch (error) {
+            console.error('Error fetching remedies:', error);
+            container.innerHTML = `
+                <div class="text-center py-20 bg-red-50 rounded-3xl border border-red-100">
+                    <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                    <p class="text-red-900 font-bold">${lang === 'telugu' ? 'లోడ్ చేయడం విఫలమైంది' : lang === 'hindi' ? 'लोड करने में विफल' : 'Failed to load remedies'}</p>
+                    <button onclick="location.reload()" class="mt-4 text-red-600 underline">${lang === 'telugu' ? 'మళ్ళీ ప్రయత్నించండి' : lang === 'hindi' ? 'फिर से प्रयास करें' : 'Try again'}</button>
+                </div>
+            `;
+        }
+    }
+
+    let ratings = {};
+
+    function setRating(remedyId, rating) {
+        ratings[remedyId] = rating;
+        const starContainer = document.getElementById(`stars-${remedyId}`);
+        const stars = starContainer.querySelectorAll('.star-btn');
+        stars.forEach((btn, index) => {
+            if (index < rating) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    async function sendQuickFeedback(remedyId, rating) {
+        await submitFeedback(remedyId, rating, "Quick feedback");
+    }
+
+    async function submitFeedback(remedyId, rating, comment) {
+        const finalRating = rating || ratings[remedyId] || 0;
+        const finalComment = comment || document.getElementById(`comment-${remedyId}`).value;
+
+        if (finalRating === 0) {
+            showToast(`${lang === 'telugu' ? 'దయచేసి రేటింగ్ ఇవ్వండి' : lang === 'hindi' ? 'कृपया रेटिंग दें' : 'Please select a rating'}`);
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/feedback/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    remedy_id: remedyId,
+                    rating: finalRating,
+                    feedback_text: finalComment,
+                    language: lang
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast(`${lang === 'telugu' ? 'ఫీడ్బ్యాక్ విజయవంతంగా సమర్పించబడింది' : lang === 'hindi' ? 'फीडबैक सफलतापूर्वक जमा किया गया' : 'Feedback submitted successfully'}`);
+                document.getElementById(`comment-${remedyId}`).value = '';
+                document.getElementById(`comment-${remedyId}`).placeholder = "Feedback submitted";
+                // Optional: disable buttons
+            }
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+        }
+    }
+
+    function goSearch() {
+        const val = document.getElementById('search-input').value;
+        if (val && val.trim() !== "") {
+            const lang = detectLang(val);
+            window.location.href = `{% url 'search_remedy' %}?symptom=${encodeURIComponent(val)}&lang=${lang}`;
+        }
+    }
+    
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.innerText = message;
+    toast.className = "fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-lg z-50";
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+loadRemedies();
+</script>
+{% endblock %}

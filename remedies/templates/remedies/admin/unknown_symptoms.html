@@ -1,0 +1,84 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12">
+    <div class="mb-12">
+        <h2 class="text-4xl font-bold text-emerald-950 mb-2">Unknown Symptoms</h2>
+        <p class="text-slate-500 text-lg italic">"Data-driven growth: Turning missed searches into new remedies."</p>
+    </div>
+
+    <div id="symptoms-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Loading state -->
+        <div class="animate-pulse bg-white p-6 rounded-3xl border border-emerald-50 h-32"></div>
+        <div class="animate-pulse bg-white p-6 rounded-3xl border border-emerald-50 h-32"></div>
+        <div class="animate-pulse bg-white p-6 rounded-3xl border border-emerald-50 h-32"></div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-emerald-100 shadow-sm">
+        <div class="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+            <i class="fas fa-smile-beam"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-emerald-950 mb-4">No Unknown Symptoms</h3>
+        <p class="text-slate-600">Great! It seems all user searches are currently covered by our database.</p>
+    </div>
+</div>
+
+<style>
+    .symptom-card {
+        background: white;
+        border-radius: 1.5rem;
+        border: 1px solid #f0fdf4;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        transition: all 0.3s;
+    }
+    .symptom-card:hover {
+        transform: translateY(-4px);
+        border-color: #10b981;
+        box-shadow: 0 20px 25px -5px rgb(16 185 129 / 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadUnknownSymptoms() {
+        const container = document.getElementById('symptoms-list');
+        const emptyState = document.getElementById('empty-state');
+        try {
+            const response = await fetch('/api/admin/unknown-symptoms/');
+            const data = await response.json();
+            
+            if (data.unknown_symptoms.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            container.innerHTML = data.unknown_symptoms.map(s => `
+                <div class="symptom-card p-6 flex flex-col justify-between group">
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-widest border border-emerald-100">${s.language}</span>
+                            <span class="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">${s.created_at.split(' ')[0]}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-emerald-950 group-hover:text-emerald-600 transition-colors capitalize">${s.symptom_text}</h3>
+                    </div>
+                    
+                    <div class="mt-8 pt-4 border-t border-slate-50">
+                        <a href="{% url 'admin_manage_remedies' %}?symptom=${encodeURIComponent(s.symptom_text)}" 
+                           class="w-full py-3 bg-slate-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center">
+                            <i class="fas fa-plus mr-2"></i> Add Remedy
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            container.innerHTML = '<p class="text-red-500">Error loading unknown symptoms.</p>';
+        }
+    }
+    loadUnknownSymptoms();
+</script>
+{% endblock %}

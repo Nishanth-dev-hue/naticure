@@ -1,0 +1,154 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="relative py-16 md:py-24 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center">
+            <h1 class="text-5xl md:text-7xl font-bold text-emerald-950 mb-6 leading-tight">
+                <span data-translate="hero_title_1">Natural Healing,</span> <br>
+                <span class="text-emerald-600 italic" data-translate="hero_title_2">Powered by Tradition</span>
+            </h1>
+            <p class="text-xl text-slate-600 mb-12 max-w-2xl mx-auto leading-relaxed" data-translate="hero_subtitle">
+                Trusted by generations. Discover simple, natural remedies for everyday health problems — fast, safe, and effective.
+            </p>
+            
+
+            <!-- Search Bar -->
+            <div class="max-w-3xl mx-auto">
+                <div class="relative group">
+                    <input type="text" id="symptom-search" 
+                           placeholder="Describe your problem (e.g. cough, fever, headache)" data-translate-placeholder="search_placeholder"
+                           class="w-full pl-14 pr-32 py-5 bg-white border-2 border-emerald-50 rounded-2xl text-lg shadow-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all duration-300 placeholder:text-slate-400">
+                    <div class="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-500 text-xl group-focus-within:scale-110 transition-transform">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <button onclick="findRemedy()" 
+                            class="absolute right-3 top-3 bottom-3 px-8 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-md">
+                        <span data-translate="find_remedy">Find Remedy</span>
+                    </button>
+                </div>
+                
+                <!-- Chips -->
+                <div class="mt-8 flex flex-wrap justify-center gap-3">
+                    <span class="text-sm text-slate-500 font-medium mr-2 self-center" data-translate="common_searches">Common searches:</span>
+
+                    <button onclick="setSymptom('cough')" class="chip-btn" data-translate="chip_cough">Cough</button>
+                    <button onclick="setSymptom('fever')" class="chip-btn" data-translate="chip_fever">Fever</button>
+                    <button onclick="setSymptom('cold')" class="chip-btn" data-translate="chip_cold">Cold</button>
+                    <button onclick="setSymptom('headache')" class="chip-btn" data-translate="chip_headache">Headache</button>
+                    <button onclick="setSymptom('acidity')" class="chip-btn" data-translate="chip_acidity">Acidity</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-emerald-100 rounded-full blur-3xl opacity-50"></div>
+    <div class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-96 h-96 bg-emerald-50 rounded-full blur-3xl opacity-50"></div>
+</div>
+
+<!-- Features Section -->
+<div class="py-20 bg-white border-y border-emerald-50">
+    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-12">
+        <div class="text-center p-6 rounded-2xl hover:bg-emerald-50 transition-colors group">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i class="fas fa-history"></i>
+            </div>
+            <h3 class="text-xl font-bold text-emerald-950 mb-4"><span data-translate="feature1_title">Ancient Wisdom</span></h3>
+            <p class="text-slate-600" data-translate="feature1_desc">Curated remedies from traditional Indian Ayurveda and home practices.</p>
+        </div>
+        <div class="text-center p-6 rounded-2xl hover:bg-emerald-50 transition-colors group">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 class="text-xl font-bold text-emerald-950 mb-4"><span data-translate="feature2_title">Verified Remedies</span></h3>
+            <p class="text-slate-600" data-translate="feature2_desc">Tested and trusted remedies used by real people for quick relief.</p>
+        </div>
+        <div class="text-center p-6 rounded-2xl hover:bg-emerald-50 transition-colors group">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                <i class="fas fa-wifi-slash"></i>
+            </div>
+            <h3 class="text-xl font-bold text-emerald-950 mb-4"><span data-translate="feature3_title">Offline First</span></h3>
+            <p class="text-slate-600" data-translate="feature3_desc">Works even without internet. Access remedies anytime, anywhere.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .active-lang {
+        border-color: #10b981 !important;
+        background-color: #ecfdf5 !important;
+        color: #047857 !important;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .chip-btn {
+        background: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #065f46;
+        border: 1px solid #d1fae5;
+        transition: all 0.2s;
+    }
+    .chip-btn:hover {
+        background: #10b981;
+        color: white;
+        border-color: #10b981;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgb(16 185 129 / 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentLang = localStorage.getItem('lang') || 'english';
+
+    function findRemedy() {
+        const symptom = document.getElementById('symptom-search').value;
+        if (!symptom) return;
+        localStorage.setItem('lang', currentLang);
+        window.location.href = `{% url 'search_remedy' %}?symptom=${encodeURIComponent(symptom)}`;
+    }
+
+    function setSymptom(symptomKey) {
+        const lang = localStorage.getItem('lang') || 'english';
+
+        const symptomMap = {
+            cough: {
+                english: "cough",
+                telugu: "దగ్గు",
+                hindi: "खांसी"
+            },
+            fever: {
+                english: "fever",
+                telugu: "జ్వరం",
+                hindi: "बुखार"
+            },
+            cold: {
+                english: "cold",
+                telugu: "జలుబు",
+                hindi: "जुकाम"
+            },
+            headache: {
+                english: "headache",
+                telugu: "తలనొప్పి",
+                hindi: "सिरदर्द"
+            },
+            acidity: {
+                english: "acidity",
+                telugu: "అమ్లత్వం",
+                hindi: "एसिडिटी"
+            }
+        };
+
+        const translated = symptomMap[symptomKey][lang] || symptomKey;
+
+        document.getElementById('symptom-search').value = translated;
+
+        findRemedy();
+    }
+</script>
+{% endblock %}

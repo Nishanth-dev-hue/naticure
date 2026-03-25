@@ -1,0 +1,64 @@
+{% extends "remedies/base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-12">
+    <div class="bg-white rounded-3xl shadow-xl border p-8">
+
+        <h2 class="text-3xl font-bold mb-4">Share Your Feedback</h2>
+
+        <p class="mb-6 text-gray-600">
+            Feedback for: <strong>{{ remedy.remedy_name }}</strong>
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Hidden Remedy ID -->
+            <input type="hidden" name="remedy_id" value="{{ remedy.id }}">
+
+            <!-- Rating -->
+            <div class="mb-6">
+                <label class="block font-bold mb-2">Rating</label>
+                <div id="stars">
+                    <button type="button" data-value="1">★</button>
+                    <button type="button" data-value="2">★</button>
+                    <button type="button" data-value="3">★</button>
+                    <button type="button" data-value="4">★</button>
+                    <button type="button" data-value="5">★</button>
+                </div>
+                <input type="hidden" name="rating" id="rating">
+            </div>
+
+            <!-- Feedback -->
+            <div class="mb-6">
+                <label class="block font-bold mb-2">Your Experience</label>
+                <textarea name="feedback_text" rows="4"
+                          class="w-full border p-2 rounded"></textarea>
+            </div>
+
+            <button type="submit"
+                class="bg-emerald-600 text-white px-6 py-3 rounded-lg">
+                Submit Feedback
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<script>
+const stars = document.querySelectorAll("#stars button");
+const ratingInput = document.getElementById("rating");
+
+stars.forEach(star => {
+    star.addEventListener("click", () => {
+        let val = star.getAttribute("data-value");
+        ratingInput.value = val;
+
+        stars.forEach(s => s.style.color = "gray");
+        for (let i = 0; i < val; i++) {
+            stars[i].style.color = "gold";
+        }
+    });
+});
+</script>
+{% endblock %}

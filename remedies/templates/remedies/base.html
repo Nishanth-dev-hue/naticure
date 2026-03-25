@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NatiCure - Natural Healing, Powered by Tradition</title>
+    <link rel="manifest" href="{% url 'manifest' %}">
+    <meta name="theme-color" content="#059669">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8fafc;
+        }
+        h1, h2, .logo-font {
+            font-family: 'Playfair Display', serif;
+        }
+        .bg-pattern {
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#10b981 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            background-opacity: 0.1;
+        }
+        .nav-link {
+            position: relative;
+            transition: color 0.3s;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #10b981;
+            transition: width 0.3s;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .nav-link.active {
+            color: #059669;
+            font-weight: 600;
+        }
+        .nav-link.active::after {
+            width: 100%;
+        }
+        #offline-indicator {
+            display: none;
+            background: #f59e0b;
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <div id="offline-indicator" class="font-medium">
+        <i class="fas fa-wifi-slash mr-2"></i> You are currently offline. Using cached data.
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center">
+                    <a href="{% url 'home' %}" class="flex items-center group">
+                        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center text-white shadow-md group-hover:rotate-12 transition-transform duration-300">
+                            <i class="fas fa-leaf text-xl"></i>
+                        </div>
+                        <span class="ml-3 text-2xl font-bold text-emerald-900 logo-font">NatiCure</span>
+                    </a>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="{% url 'home' %}" class="nav-link text-gray-600 hover:text-emerald-600 font-medium {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+                    <a href="{% url 'search_remedy' %}" class="nav-link text-gray-600 hover:text-emerald-600 font-medium {% if request.resolver_match.url_name == 'search_remedy' %}active{% endif %}">Remedies</a>
+                    <a href="{% url 'suggest_remedy' %}" class="nav-link text-gray-600 hover:text-emerald-600 font-medium">Suggest Remedy</a>
+                    <a href="#" onclick="alert('Contact: support@naticure.com')" class="nav-link text-gray-600 hover:text-emerald-600 font-medium">Support</a>
+
+                    <select id="language-switch" class="border rounded px-2 py-1 text-sm">
+                        <option value="english">English</option>
+                        <option value="telugu">తెలుగు</option>
+                        <option value="hindi">हिंदी</option>
+                    </select>
+                    {% if user.is_authenticated and user.is_superuser %}
+                        <a href="{% url 'admin_dashboard' %}" class="ml-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full font-semibold hover:bg-emerald-200 transition-colors">
+                            <i class="fas fa-cog mr-1 text-sm"></i> Admin Panel
+                        </a>
+                        <a href="{% url 'logout' %}" class="text-gray-500 hover:text-red-600 transition-colors">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-gray-400 hover:text-emerald-600 transition-colors">
+                            <i class="fas fa-lock text-sm"></i>
+                        </a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-600 focus:outline-none" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 space-y-4 shadow-lg">
+            <a href="{% url 'home' %}" class="block text-gray-600 hover:text-emerald-600 font-medium py-2 {% if request.resolver_match.url_name == 'home' %}text-emerald-600 font-semibold{% endif %}" aria-current="{% if request.resolver_match.url_name == 'home' %}page{% endif %}">Home</a>
+            <a href="{% url 'search_remedy' %}" class="block text-gray-600 hover:text-emerald-600 font-medium py-2 {% if request.resolver_match.url_name == 'search_remedy' %}text-emerald-600 font-semibold{% endif %}" aria-current="{% if request.resolver_match.url_name == 'search_remedy' %}page{% endif %}">Remedies</a>
+            <a href="{% url 'suggest_remedy' %}" class="block text-gray-600 hover:text-emerald-600 font-medium py-2 {% if request.resolver_match.url_name == 'suggest_remedy' %}text-emerald-600 font-semibold{% endif %}" aria-current="{% if request.resolver_match.url_name == 'suggest_remedy' %}page{% endif %}">Suggest Remedy</a>
+            <div class="space-y-2">
+                <select id="mobile-language-switch" class="w-full border rounded px-2 py-2 text-sm">
+                    <option value="english">English</option>
+                    <option value="telugu">తెలుగు</option>
+                    <option value="hindi">हिंदी</option>
+                </select>
+            </div>
+            {% if user.is_authenticated and user.is_superuser %}
+                <a href="{% url 'admin_dashboard' %}" class="block text-emerald-600 font-bold py-2">Admin Dashboard</a>
+                <a href="{% url 'logout' %}" class="block text-red-500 py-2">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="block text-gray-500 py-2">
+                    <i class="fas fa-lock mr-2"></i> Login
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-emerald-950 text-emerald-100 py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center mb-6">
+                <i class="fas fa-leaf text-2xl text-emerald-400 mr-2"></i>
+                <span class="text-2xl font-bold logo-font tracking-wider">NatiCure</span>
+            </div>
+            <p class="text-emerald-400/80 mb-8 max-w-md mx-auto">Connecting you to the wisdom of traditional Indian healing, one symptom at a time.</p>
+            <div class="flex justify-center space-x-6 mb-8 text-xl">
+                <a href="#" class="hover:text-white transition-colors"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="hover:text-white transition-colors"><i class="fab fa-twitter"></i></a>
+            </div>
+            <p class="text-emerald-500/50 text-sm">&copy; 2026 NatiCure. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Check online status
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offline-indicator');
+            if (navigator.onLine) {
+                indicator.style.display = 'none';
+            } else {
+                indicator.style.display = 'block';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{% url "service_worker" %}')
+                    .then(reg => console.log('SW Registered'))
+                    .catch(err => console.log('SW Registration Failed', err));
+            });
+        }
+
+        // Language Switcher
+        const langSelect = document.getElementById('language-switch');
+        const mobileLangSelect = document.getElementById('mobile-language-switch');
+
+        const savedLang = localStorage.getItem('lang') || 'english';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTranslations(savedLang);
+        });
+
+        const translations = {
+            english: {
+                home: "Home",
+                remedies: "Remedies",
+                suggest: "Suggest Remedy",
+                support: "Support",
+                hero_title_1: "Natural Healing,",
+                hero_title_2: "Powered by Tradition",
+                hero_subtitle: "Trusted by generations. Discover simple, natural remedies for everyday health problems — fast, safe, and effective.",
+                search_placeholder: "Describe your problem (e.g. cough, fever, headache)",
+                find_remedy: "Find Remedy",
+                common_searches: "Common searches:",
+                feature1_title: "Ancient Wisdom",
+                feature1_desc: "Curated remedies from traditional Indian Ayurveda and home practices.",
+                feature2_title: "Verified Remedies",
+                feature2_desc: "Tested and trusted remedies used by real people for quick relief.",
+                feature3_title: "Offline First",
+                feature3_desc: "Works even without internet. Access remedies anytime, anywhere.",
+                suggest_title: "Suggest a Remedy",
+                suggest_desc: "Help us expand our traditional Indian home remedy database. Your suggestion will be reviewed by our admin team.",
+                symptom_label: "Symptom",
+                remedy_name_label: "Remedy Name",
+                ingredients_label: "Ingredients",
+                preparation_label: "Preparation Steps",
+                language_label: "Language of Entry",
+                submit_btn: "Submit for Review",
+                suggest_success: "Thank you for your suggestion!",
+                suggest_error: "Something went wrong",
+                symptom_placeholder: "e.g. Dry Cough",
+                remedy_placeholder: "e.g. Honey & Ginger",
+                ingredients_placeholder: "List the natural ingredients needed...",
+                preparation_placeholder: "How to prepare and use this remedy?"
+            },
+            telugu: {
+                home: "హోమ్",
+                remedies: "చికిత్సలు",
+                suggest: "సూచించండి",
+                support: "మద్దతు",
+                hero_title_1: "సహజ వైద్యం,",
+                hero_title_2: "పారంపర్య శక్తితో",
+                hero_subtitle: "తరాలుగా నమ్మకం. రోజువారీ ఆరోగ్య సమస్యలకు సులభమైన సహజ చికిత్సలు కనుగొనండి.",
+                search_placeholder: "మీ సమస్యను వివరించండి (ఉదా: దగ్గు, జ్వరం)",
+                find_remedy: "చికిత్స కనుగొను",
+                common_searches: "సాధారణ శోధనలు:",
+                feature1_title: "పురాతన జ్ఞానం",
+                feature1_desc: "ఆయుర్వేదం మరియు ఇంటి చికిత్సల నుండి సేకరించబడింది.",
+                feature2_title: "ధృవీకరించిన చికిత్సలు",
+                feature2_desc: "ప్రజలు ఉపయోగించిన నమ్మకమైన చికిత్సలు.",
+                feature3_title: "ఆఫ్లైన్ సపోర్ట్",
+                feature3_desc: "ఇంటర్నెట్ లేకపోయినా పనిచేస్తుంది.",
+                suggest_title: "చికిత్స సూచించండి",
+                suggest_desc: "మీ సూచనను అడ్మిన్ సమీక్షిస్తారు.",
+                symptom_label: "లక్షణం",
+                remedy_name_label: "చికిత్స పేరు",
+                ingredients_label: "పదార్థాలు",
+                preparation_label: "తయారీ విధానం",
+                language_label: "భాష",
+                submit_btn: "సమర్పించండి",
+                suggest_success: "ధన్యవాదాలు!",
+                suggest_error: "లోపం జరిగింది",
+                symptom_placeholder: "ఉదా: దగ్గు",
+                remedy_placeholder: "ఉదా: తేనె అల్లం",
+                ingredients_placeholder: "పదార్థాలు నమోదు చేయండి",
+                preparation_placeholder: "ఎలా తయారు చేయాలి"
+            },
+            hindi: {
+                home: "होम",
+                remedies: "उपचार",
+                suggest: "सुझाव दें",
+                support: "सहायता",
+                hero_title_1: "प्राकृतिक उपचार,",
+                hero_title_2: "परंपरा की शक्ति",
+                hero_subtitle: "पीढ़ियों से भरोसेमंद। रोजमर्रा की समस्याओं के लिए सरल प्राकृतिक उपचार खोजें।",
+                search_placeholder: "अपनी समस्या बताएं (जैसे खांसी, बुखार)",
+                find_remedy: "उपचार खोजें",
+                common_searches: "सामान्य खोजें:",
+                feature1_title: "प्राचीन ज्ञान",
+                feature1_desc: "आयुर्वेद और पारंपरिक घरेलू उपचारों से लिया गया।",
+                feature2_title: "सत्यापित उपचार",
+                feature2_desc: "लोगों द्वारा उपयोग किए गए विश्वसनीय उपचार।",
+                feature3_title: "ऑफलाइन समर्थन",
+                feature3_desc: "बिना इंटरनेट भी काम करता है।",
+                suggest_title: "उपचार सुझाएं",
+                suggest_desc: "आपका सुझाव समीक्षा किया जाएगा",
+                symptom_label: "लक्षण",
+                remedy_name_label: "उपचार का नाम",
+                ingredients_label: "सामग्री",
+                preparation_label: "तैयारी",
+                language_label: "भाषा",
+                submit_btn: "जमा करें",
+                suggest_success: "धन्यवाद!",
+                suggest_error: "त्रुटि हुई",
+                symptom_placeholder: "जैसे खांसी",
+                remedy_placeholder: "जैसे शहद अदरक",
+                ingredients_placeholder: "सामग्री लिखें",
+                preparation_placeholder: "कैसे बनाएं"
+            }
+        };
+
+        function applyTranslations(lang) {
+            const t = translations[lang];
+
+            // Navbar (existing)
+            document.querySelectorAll('a').forEach(el => {
+                const text = el.textContent.trim();
+                if (text === "Home") el.textContent = t.home;
+                if (text === "Remedies") el.textContent = t.remedies;
+                if (text === "Suggest Remedy") el.textContent = t.suggest;
+                if (text === "Support") el.textContent = t.support;
+            });
+
+            // FIX: data-translate support
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if (t[key]) {
+                    el.textContent = t[key];
+                }
+            });
+
+            // FIX: placeholder translation
+            document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-translate-placeholder');
+                if (t[key]) {
+                    el.placeholder = t[key];
+                }
+            });
+        }
+
+        function handleLangChange(lang) {
+            localStorage.setItem('lang', lang);
+            applyTranslations(lang);
+        }
+
+        if (langSelect) {
+            langSelect.value = savedLang;
+            langSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
+        }
+
+        if (mobileLangSelect) {
+            mobileLangSelect.value = savedLang;
+            mobileLangSelect.addEventListener('change', (e) => handleLangChange(e.target.value));
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
